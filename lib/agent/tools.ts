@@ -4,6 +4,10 @@ import { defineTool, type AgentTool } from "./defineTool";
 import { CURRENT_STUDENT_ID, formatSlot } from "../campusbite";
 import { getSupabase } from "../supabase";
 
+function first<T>(x: T | T[] | null | undefined): T | undefined {
+  return Array.isArray(x) ? x[0] : (x ?? undefined);
+}
+
 const getMenu = defineTool({
   name: "getMenu",
   description:
@@ -83,9 +87,11 @@ const getMyOrders = defineTool({
       status: order.status,
       total: order.total,
       pickup_time: order.pickup_slots
-        ? formatSlot(order.pickup_slots.slot_time)
+        ? formatSlot(first(order.pickup_slots)?.slot_time)
         : null,
-      items: order.order_items.map((item) => item.menu_items.name),
+      items: (order.order_items ?? [])
+        .map((item) => first(item.menu_items)?.name)
+        .filter((name): name is string => Boolean(name)),
     }));
   },
 });
